@@ -36,13 +36,14 @@ const io = new Server(server, {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middlewares
+// 🔥 VERY IMPORTANT ORDER
 app.use(cors({
   origin: "https://caresync-liart.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+
 app.use(express.json());
+app.options("*", cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
