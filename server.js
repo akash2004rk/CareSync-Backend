@@ -23,6 +23,11 @@ const port = process.env.PORT || 5000;
 
 connectDB();
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined.');
+  process.exit(1);
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -59,6 +64,11 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'active', message: 'CareSync API is running' });
+});
+
 // Socket.io connection logic
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -78,6 +88,9 @@ app.set('socketio', io);
 
 // Error Handling
 app.use((err, req, res, next) => {
+  console.error(`[Error] ${err.name}: ${err.message}`);
+  if (err.stack) console.error(err.stack);
+
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode).json({
     message: err.message,

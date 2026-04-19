@@ -2,9 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const protect = async (req, res, next) => {
-  let token;
-
-  token = req.cookies.jwt;
+  let token = req.cookies.jwt;
 
   if (token) {
     try {
@@ -12,6 +10,7 @@ const protect = async (req, res, next) => {
       const user = await User.findById(decoded.userId).select('-password');
       
       if (!user) {
+        console.warn(`[Auth] User not found for ID: ${decoded.userId}`);
         res.status(401);
         throw new Error('Not authorized, user not found');
       }
@@ -19,10 +18,12 @@ const protect = async (req, res, next) => {
       req.user = user;
       next();
     } catch (error) {
+      console.error(`[Auth] Token validation failed: ${error.message}`);
       res.status(401);
       throw new Error('Not authorized, token failed');
     }
   } else {
+    console.warn(`[Auth] No token found in cookies for request: ${req.originalUrl}`);
     res.status(401);
     throw new Error('Not authorized, no token');
   }
