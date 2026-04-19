@@ -8,21 +8,36 @@ import jwt from 'jsonwebtoken';
 // @route   POST /api/auth/login
 // @access  Public
 const authUser = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    console.log(`[Login] Attempt for email: ${email}`);
 
-  const user = await User.findOne({ email });
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.warn(`[Login] User not found: ${email}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
-  if (user && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
+    console.log(`[Login] User found, comparing passwords...`);
+    const isMatch = await user.matchPassword(password);
+    
+    if (isMatch) {
+      console.log(`[Login] Password matched. Generating token...`);
+      generateToken(res, user._id);
 
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid email or password' });
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    } else {
+      console.warn(`[Login] Password mismatch for: ${email}`);
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    console.error(`[Login Error] ${error.name}: ${error.message}`);
+    res.status(500).json({ message: 'Server error during login', error: error.message });
   }
 };
 

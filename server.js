@@ -69,6 +69,11 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'active', message: 'CareSync API is running' });
 });
 
+// Root Route
+app.get('/', (req, res) => {
+  res.send('Welcome to CareSync API Services');
+});
+
 // Socket.io connection logic
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
