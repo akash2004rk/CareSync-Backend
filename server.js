@@ -48,7 +48,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.options("*", cors());
+app.options("/*splat", cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
