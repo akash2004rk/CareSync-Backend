@@ -19,14 +19,16 @@ import medicalRecordRoutes from './routes/medicalRecordRoutes.js';
 
 dotenv.config();
 
-const port = process.env.PORT || 5000;
-
-connectDB();
-
+// Pre-check for critical env variables
 if (!process.env.JWT_SECRET) {
   console.error('FATAL ERROR: JWT_SECRET is not defined.');
   process.exit(1);
 }
+
+const port = process.env.PORT || 5000;
+
+// Connect to Database first
+await connectDB();
 
 const app = express();
 const server = http.createServer(app);
@@ -42,13 +44,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 🔥 VERY IMPORTANT ORDER
-app.use(cors({
+const corsOptions = {
   origin: "https://caresync-liart.vercel.app",
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+};
+
+app.use(cors(corsOptions));
+app.options("/*splat", cors(corsOptions)); // Handle preflight for all routes with correct options
 
 app.use(express.json());
-app.options("/*splat", cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 

@@ -10,21 +10,28 @@ import jwt from 'jsonwebtoken';
 const authUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(`[Login] Attempt for email: ${email}`);
+    
+    if (!email || !password) {
+      console.warn(`[Login] Missing credentials. Body keys: ${Object.keys(req.body || {})}`);
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
 
+    console.log(`[Login Step 1] Searching for user: ${email}`);
     const user = await User.findOne({ email });
+
     if (!user) {
       console.warn(`[Login] User not found: ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    console.log(`[Login] User found, comparing passwords...`);
+    console.log(`[Login Step 2] User found (_id: ${user._id}). Comparing passwords...`);
     const isMatch = await user.matchPassword(password);
     
     if (isMatch) {
-      console.log(`[Login] Password matched. Generating token...`);
+      console.log(`[Login Step 3] Password matched. Generating token...`);
       generateToken(res, user._id);
 
+      console.log(`[Login Step 4] Token generated. Sending success response.`);
       res.json({
         _id: user._id,
         name: user.name,
@@ -32,12 +39,17 @@ const authUser = async (req, res) => {
         role: user.role,
       });
     } else {
-      console.warn(`[Login] Password mismatch for: ${email}`);
+      console.warn(`[Login] Password mismatch for user: ${email}`);
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    console.error(`[Login Error] ${error.name}: ${error.message}`);
-    res.status(500).json({ message: 'Server error during login', error: error.message });
+    console.error(`[Login FATAL] ${error.name}: ${error.message}`);
+    if (error.stack) console.error(error.stack);
+    res.status(500).json({ 
+      message: 'Server error during login', 
+      error: error.message,
+      type: error.name 
+    });
   }
 };
 
